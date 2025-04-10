@@ -1,4 +1,30 @@
-#### RENAME from project.py to (your_project_short_name).py
+import pandas as pd
+
+
+def get_data():
+    desired_objects = ['Mercury', 'Venus', 'Ceres']
+
+    url = 'https://en.wikipedia.org/wiki/List_of_Solar_System_extremes'
+
+    tables = pd.read_html(url)
+    extreme_values_table = tables[5].set_index(tables[5].columns[0])
+    object_names = extreme_values_table.iloc[:, 0]
+    for desired_object in desired_objects:
+        # Add a condition that checks for the existence of each value in the table
+        # before assigning it to a variable
+
+        minimum_temperature = extreme_values_table.loc[desired_object].iloc[5].split('K')[0]
+        maximum_temperature = extreme_values_table.loc[desired_object].iloc[4].split('K')[0]
+        print('The temperature range on {} is {} - {} K'.format(desired_object, minimum_temperature, maximum_temperature))
+
+    solar_system_objects_data = []
+    return solar_system_objects_data
+
+
+if __name__ == '__main__':
+    objects = get_data()
+
+#### RENAME from temperature_icons.py to (your_project_short_name).py
 # File structure
 # 1. Commented paragraph describing project ~ 100-200 words
 # 2. Module imports that are used in multiple functions
