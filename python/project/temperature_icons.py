@@ -1,4 +1,13 @@
+"""
+Make the bulb smaller relative to the pipe
+Put F and C scales on opposite sides
+Make a black and ahwite version and a color version with blue on the minimum temperature anf red on the maximum temperature
+"""
+
+
+
 import pandas as pd
+
 
 
 def get_data():
