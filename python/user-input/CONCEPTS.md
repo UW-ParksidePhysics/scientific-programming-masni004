@@ -1,2 +1,4 @@
 # Concepts
-* 
+* Function
+* Condition
+* Indent
