@@ -1,62 +1,151 @@
-"""
-Make the bulb smaller relative to the pipe
-Put F and C scales on opposite sides
-Make a black and ahwite version and a color version with blue on the minimum temperature anf red on the maximum temperature
-"""
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.patches import Rectangle, Circle
+
+# Data given
+planets = [
+    "Mercury",
+    "Venus",
+    "Earth",
+    "Mars",
+    "Ceres",
+    "Jupiter",
+    "Saturn",
+    "Uranus",
+    "Neptune",
+    "Pluto",
+]
+
+# Temperature data in Kelvin
+mins_K = np.array([89, 644, 184, 120, 180, 110, 82, 59, 50, 35])
+maxs_K = np.array([723, 755, 330, 293, 235, 152, 143, 68, 53, 45])
 
 
-
-import pandas as pd
-
-
-
-def get_data():
-    desired_objects = ['Mercury', 'Venus', 'Ceres']
-
-    url = 'https://en.wikipedia.org/wiki/List_of_Solar_System_extremes'
-
-    tables = pd.read_html(url)
-    extreme_values_table = tables[5].set_index(tables[5].columns[0])
-    object_names = extreme_values_table.iloc[:, 0]
-    for desired_object in desired_objects:
-        # Add a condition that checks for the existence of each value in the table
-        # before assigning it to a variable
-
-        minimum_temperature = extreme_values_table.loc[desired_object].iloc[5].split('K')[0]
-        maximum_temperature = extreme_values_table.loc[desired_object].iloc[4].split('K')[0]
-        print('The temperature range on {} is {} - {} K'.format(desired_object, minimum_temperature, maximum_temperature))
-
-    solar_system_objects_data = []
-    return solar_system_objects_data
+def c_to_f(celsius):
+    return celsius * 9.0 / 5.0 + 32.0
 
 
-if __name__ == '__main__':
-    objects = get_data()
+# Axes limits
+C_MIN = -239
+C_MAX = 482
 
-#### RENAME from temperature_icons.py to (your_project_short_name).py
-# File structure
-# 1. Commented paragraph describing project ~ 100-200 words
-# 2. Module imports that are used in multiple functions
-# 3. Function definitions
-# 4. if __name__ == "__main__" block, which calls a primary function with a clear name 
+# Line widths
+TUBE_LINE_WIDTH = 3      # Thickness of the thermometer tube
+BULB_LINE_WIDTH = 3      # Thickness of the bulb outline
+OUTER_FRAME_WIDTH = 6    # Thickness of the outer frame around entire plot
+MARKER_LINE_WIDTH = 4    # Thickness of the marker line
 
-# All code is inside function definitions for simulation solution & visualization (functional programming)
-#	Each function contains a docstring compliant with PEP 257: https://www.python.org/dev/peps/pep-0257/
-#	Module ends with if __name__ == "__main__" block to execute central function of the code
 
-# Primary simulation function structure
-#	1. Module imports
-#		Use SciPy constants for physical constants in particular function (not globally)
-#			https://docs.scipy.org/doc/scipy/reference/constants.html
-#		Follow best practice order: 
-#			https://docs.python.org/3/faq/programming.html#what-are-the-best-practices-for-using-import-in-a-module
-# 	2. Simulation parameters
-#		Each parameter named clearly and units marked in in-line comment
-#		Naming of all variables should comply with PEP 8: 
-#			https://www.python.org/dev/peps/pep-0008/#documentation-strings
-#			(lower_case_with_underscores)
-# 	3. Computed parameters (from simulation parameters)
-# 	4. Function calls (use PEP 8-compliant lower_case_with_underscores) and simple calculations for:
-#		data read-in
-#		simulation solution 
-#		visualization
+def plot_single_thermometer(planet, temp_min_c, temp_max_c, cmap):
+    """
+    Creates the thermometer for a single planet.
+    """
+    fig, ax = plt.subplots(figsize=(3, 8))
+
+    # Thicken outer frame (axes spines)
+    for spine in ax.spines.values():
+        spine.set_linewidth(OUTER_FRAME_WIDTH)
+
+    # Tube and bulb dimensions
+    tube_width = 0.3
+    bulb_radius = tube_width
+
+    # Draw tube outline
+    ax.add_patch(
+        Rectangle(
+            (0.5 - tube_width / 2, temp_min_c),
+            tube_width,
+            temp_max_c - temp_min_c,
+            fill=False,
+            linewidth=TUBE_LINE_WIDTH,
+            zorder=5,
+        )
+    )
+
+    # Draw bulb outline
+    ax.add_patch(
+        Circle(
+            (0.5, temp_min_c),
+            radius=bulb_radius,
+            fill=False,
+            linewidth=BULB_LINE_WIDTH,
+            zorder=5,
+        )
+    )
+
+    # Gradient fill
+    grad = np.linspace(0.0, 1.0, 256).reshape(-1, 1)
+    ax.imshow(
+        grad,
+        extent=[
+            0.5 - tube_width / 2,
+            0.5 + tube_width / 2,
+            temp_min_c,
+            temp_max_c,
+        ],
+        aspect="auto",
+        cmap=cmap,
+        origin="lower",
+        zorder=1,
+    )
+
+    # Axis formatting
+    ax.set_xlim(0.3, 0.7)
+    ax.set_ylim(C_MIN, C_MAX)
+    ax.set_xticks([])
+
+    # Tick labels every 100 °C
+    ticks_c = np.arange(C_MIN, C_MAX + 1, 100)
+    ax.set_yticks(ticks_c)
+    ax.set_yticklabels([f"{c:.0f}°C" for c in ticks_c])
+    ax.tick_params(axis="y", labelsize=14)
+
+    # Right y-axis: Fahrenheit
+    ax_f = ax.twinx()
+    ax_f.set_ylim(C_MIN, C_MAX)
+    ax_f.set_yticks(ticks_c)
+    ax_f.set_yticklabels([f"{c_to_f(c):.0f}°F" for c in ticks_c])
+    ax_f.tick_params(axis="y", labelsize=14)
+
+    # Marker line at the maximum temperature, spanning full frame width
+    x0, x1 = ax.get_xlim()
+    ax.hlines(
+        temp_max_c,
+        x0,
+        x1,
+        colors="black",
+        linewidth=MARKER_LINE_WIDTH,
+        zorder=20,
+    )
+
+    # Save and show
+    file_name = f"Temperature_Icon_{planet}_Color.png"
+    plt.tight_layout()
+    plt.savefig(file_name)
+    plt.show()
+
+
+if __name__ == "__main__":
+    # Colored gradient
+    cmap_color = LinearSegmentedColormap.from_list("blue_red", ["blue", "red"])
+    # Greyscale gradient
+    cmap_gray = LinearSegmentedColormap.from_list("black_white", ["black", "white"])
+
+    # Plot and save coloured thermometers
+    for planet, min_k, max_k in zip(planets, mins_K, maxs_K):
+        plot_single_thermometer(
+            planet,
+            min_k - 273.15,
+            max_k - 273.15,
+            cmap_color,
+        )
+
+    # Plot greyscale thermometers (without saving)
+    for planet, min_k, max_k in zip(planets, mins_K, maxs_K):
+        plot_single_thermometer(
+            planet,
+            min_k - 273.15,
+            max_k - 273.15,
+            cmap_gray,
+        )
